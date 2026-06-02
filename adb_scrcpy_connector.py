@@ -38,9 +38,17 @@ class ADBScrcpyConnector:
         port2_entry = ttk.Entry(main_frame, textvariable=self.port2_var, width=20, font=("Arial", 11))
         port2_entry.grid(row=3, column=1, sticky=tk.W, padx=10)
         
+        # Connection Mode (Wireless or USB)
+        ttk.Label(main_frame, text="Connection Mode:", font=("Arial", 11)).grid(row=4, column=0, sticky=tk.W, pady=10)
+        self.mode_var = tk.StringVar(value="wireless")
+        wireless_radio = ttk.Radiobutton(main_frame, text="Wireless", variable=self.mode_var, value="wireless")
+        wireless_radio.grid(row=4, column=1, sticky=tk.W, padx=10)
+        usb_radio = ttk.Radiobutton(main_frame, text="USB", variable=self.mode_var, value="usb")
+        usb_radio.grid(row=5, column=1, sticky=tk.W, padx=10)
+        
         # Start Button
         self.start_button = ttk.Button(main_frame, text="Start Connection", command=self.start_process)
-        self.start_button.grid(row=4, column=0, columnspan=2, pady=30)
+        self.start_button.grid(row=6, column=0, columnspan=2, pady=30)
         
         # Configure grid weights
         root.columnconfigure(0, weight=1)
@@ -67,6 +75,7 @@ class ADBScrcpyConnector:
         port1 = self.port1_var.get()
         pairing_code = self.pairing_code_var.get()
         port2 = self.port2_var.get()
+        mode = self.mode_var.get()
         
         if not port1 or not pairing_code or not port2:
             messagebox.showerror("Error", "Please fill in all fields!")
@@ -77,11 +86,11 @@ class ADBScrcpyConnector:
         self.start_button.config(text="Connecting...")
         
         # Run process in separate thread
-        thread = threading.Thread(target=self.execute_process, args=(port1, pairing_code, port2))
+        thread = threading.Thread(target=self.execute_process, args=(port1, pairing_code, port2, mode))
         thread.daemon = True
         thread.start()
     
-    def execute_process(self, port1, pairing_code, port2):
+    def execute_process(self, port1, pairing_code, port2, mode):
         """Execute the full process"""
         try:
             ip_addr = "192.168.1.25"
@@ -89,6 +98,7 @@ class ADBScrcpyConnector:
             print(f"\n{'='*50}")
             print("ADB Pairing & Scrcpy Connection Started")
             print(f"{'='*50}")
+            print(f"Mode: {mode.upper()}")
             print(f"IP Address: {ip_addr}")
             print(f"Port 1 (Pairing): {port1}")
             print(f"Port 2 (Connect): {port2}")
@@ -103,10 +113,15 @@ class ADBScrcpyConnector:
             cmd_connect = f"adb connect {ip_addr}:{port2}"
             self.run_command(cmd_connect)
             
-            # Step 3: Run Scrcpy from the scrcpy directory
-            print(f"\n[STEP 3] Starting Scrcpy...")
+            # Step 3: Run Scrcpy (different command based on mode)
+            print(f"\n[STEP 3] Starting Scrcpy ({mode.upper()})...")
             scrcpy_path = r"C:\Users\pc\Downloads\scrcpy-win64-v3.3.1"
-            cmd_scrcpy = f'cd /d "{scrcpy_path}" && scrcpy -s {ip_addr}:{port2}'
+            
+            if mode == "wireless":
+                cmd_scrcpy = f'cd /d "{scrcpy_path}" && scrcpy -s {ip_addr}:{port2}'
+            else:  # USB mode
+                cmd_scrcpy = f'cd /d "{scrcpy_path}" && scrcpy -d'
+            
             self.run_command(cmd_scrcpy)
             
             print(f"\n{'='*50}")
