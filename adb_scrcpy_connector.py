@@ -1,3 +1,4 @@
+import os
 import tkinter as tk
 from tkinter import ttk, messagebox
 import subprocess
@@ -55,16 +56,21 @@ class ADBScrcpyConnector:
         root.rowconfigure(0, weight=1)
         main_frame.columnconfigure(1, weight=1)
     
-    def run_command(self, command, input_text=None):
+    def run_command(self, command, input_text=None, wait=True):
         """Run a command with optional input"""
         try:
             print(f"\n>>> Running: {command}")
-            if input_text:
-                result = subprocess.run(command, shell=True, input=input_text, text=True, timeout=30)
+            if wait:
+                if input_text:
+                    result = subprocess.run(command, shell=True, input=input_text, text=True, timeout=30)
+                else:
+                    result = subprocess.run(command, shell=True, text=True, timeout=30)
+                print(f">>> Command completed with code: {result.returncode}")
+                return result.returncode == 0
             else:
-                result = subprocess.run(command, shell=True, text=True, timeout=30)
-            print(f">>> Command completed with code: {result.returncode}")
-            return result.returncode == 0
+                subprocess.Popen(command, shell=True)
+                print(">>> Command started in background")
+                return True
         except Exception as e:
             print(f">>> Error: {e}")
             return False
@@ -122,12 +128,18 @@ class ADBScrcpyConnector:
             else:  # USB mode
                 cmd_scrcpy = f'cd /d "{scrcpy_path}" && scrcpy -d'
             
-            self.run_command(cmd_scrcpy)
+            self.run_command(cmd_scrcpy, wait=False)
+
+            # Step 4: Launch OBS
+            print(f"\n[STEP 4] Launching OBS...")
+            obs_path = r"C:\Program Files\obs-studio\bin\64bit"
+            cmd_obs = f'cd /d "{obs_path}" && obs64.exe'
+            self.run_command(cmd_obs, wait=False)
             
             print(f"\n{'='*50}")
-            print("Process Complete!")
+            print("Process Complete! Scrcpy and OBS are starting.")
             print(f"{'='*50}\n")
-            messagebox.showinfo("Success", "Connection started successfully!")
+            messagebox.showinfo("Success", "Connection started successfully and OBS was launched!")
             
         except Exception as e:
             print(f"\n[ERROR] {str(e)}\n")
