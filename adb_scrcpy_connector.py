@@ -132,7 +132,7 @@ class ADBScrcpyConnector:
 
             # Step 4: Launch OBS
             print(f"\n[STEP 4] Launching OBS...")
-            obs_path = r"C:\Program Files\obs-studio\bin\64bit"
+            obs_path = r"F:\InstalledPrograms\Obs\obs-studio\bin\64bit"
             cmd_obs = f'cd /d "{obs_path}" && obs64.exe'
             self.run_command(cmd_obs, wait=False)
             
